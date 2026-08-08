@@ -1,0 +1,16 @@
+# Enterprise SPA Architecture Rules
+
+- Framework: Vite + React 19 + TypeScript
+- Routing: TanStack Router (File-based routing via `@tanstack/router-plugin/vite`)
+- State & Persistence: Zustand (`zustand` with `persist` middleware for LocalStorage/IndexedDB sync)
+- HTTP Client & Schema Parsing: Axios + Zod (centralized HTTP instance + runtime contract parsing)
+- UI Components & Styling: Tailwind CSS v4 + Shadcn UI (Radix UI primitives)
+- Forms & Validation: React Hook Form + Zod
+- Testing & Quality: Vitest + Playwright
+
+- Architecture & Guidelines:
+  - Do NOT suggest Next.js or React Router.
+  - Pure static SPA deployment architecture (zero Node.js server dependency).
+  - Place all route files in `src/routes/`.
+  - Organize domain-driven modules in `src/features/`, global persistent stores in `src/stores/`, and shared UI primitives in `src/components/ui/`.
+  - Keep components modular, providerless state usage, and strict with TypeScript types.
