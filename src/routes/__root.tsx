@@ -25,6 +25,12 @@ function RootComponent() {
             >
               Dashboard
             </Link>
+            <Link
+              to="/users"
+              className="text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold"
+            >
+              Users List
+            </Link>
           </nav>
         </div>
       </header>
