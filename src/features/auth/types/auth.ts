@@ -7,6 +7,12 @@ export const loginSchema = z.object({
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
 
+export const loginResponseSchema = z.object({
+  token: z.string(),
+});
+
+export type LoginResponse = z.infer<typeof loginResponseSchema>;
+
 export interface JwtClaims {
   role: string;
   id: number;
@@ -21,8 +27,4 @@ export interface AuthUser {
   role: string;
   iss: string;
   exp: number;
-}
-
-export interface LoginResponse {
-  token: string;
 }

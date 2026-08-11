@@ -10,13 +10,13 @@ export async function fetchTrafficReport(
   params: ReportFilterParams,
 ): Promise<TrafficReportItem[]> {
   const { type, date, dateTo } = params;
-  
+
   const queryParams: Record<string, string> = { date };
   if (dateTo && dateTo.trim()) {
     queryParams.dateTo = dateTo;
   }
 
-  const response = await api.get<TrafficReportItem[]>(`/report/${type}`, {
+  const response = await api.get(`/report/${type}`, {
     params: queryParams,
   });
 

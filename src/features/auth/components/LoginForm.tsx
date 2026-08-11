@@ -9,18 +9,19 @@ import {
   User,
 } from "lucide-react";
 import React, { useState } from "react";
+import { useLoginMutation } from "../api/authApi";
 import { useAuthStore } from "../store/useAuthStore";
 import { loginSchema } from "../types/auth";
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated, user } = useAuthStore();
+  const { login: setStoreAuth, isAuthenticated, user } = useAuthStore();
+  const loginMutation = useLoginMutation();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{
     username?: string;
@@ -34,7 +35,7 @@ export const LoginForm: React.FC = () => {
     setFieldErrors({});
     setSuccessMsg(null);
 
-    // Validate inputs
+    // Validate inputs with Zod
     const result = loginSchema.safeParse({ username, password });
     if (!result.success) {
       const formatted = result.error.format();
@@ -45,9 +46,9 @@ export const LoginForm: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
     try {
-      await login({ username, password });
+      // Execute login using TanStack Query Mutation
+      await setStoreAuth({ username, password });
       setSuccessMsg("Login successful! Redirecting...");
       setTimeout(() => {
         navigate({ to: "/" });
@@ -68,8 +69,6 @@ export const LoginForm: React.FC = () => {
           err.message || "Login failed. Please check your credentials.",
         );
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -98,6 +97,8 @@ export const LoginForm: React.FC = () => {
       </div>
     );
   }
+
+  const isSubmitting = loginMutation.isPending;
 
   return (
     <div className='w-full max-w-md rounded-2xl bg-slate-900/90 border border-slate-800 p-8 shadow-2xl backdrop-blur-xl space-y-6'>
