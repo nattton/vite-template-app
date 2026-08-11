@@ -2,7 +2,8 @@
 
 - Framework: Vite + React 19 + TypeScript
 - Routing: TanStack Router (File-based routing via `@tanstack/router-plugin/vite`)
-- State & Persistence: Zustand (`zustand` with `persist` middleware for LocalStorage/IndexedDB sync)
+- Server State & Caching: TanStack Query (`@tanstack/react-query` v5 for background revalidation & SWR caching)
+- Client State & Persistence: Zustand (`zustand` with `persist` middleware for LocalStorage/IndexedDB sync)
 - HTTP Client & Schema Parsing: Axios + Zod (centralized HTTP instance + runtime contract parsing)
 - UI Components & Styling: Tailwind CSS v4 + Shadcn UI (Radix UI primitives)
 - Forms & Validation: React Hook Form + Zod

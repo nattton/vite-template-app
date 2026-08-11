@@ -1,5 +1,6 @@
-import { getUserById } from "@/features/users/api/users";
+import { userQueryOptions } from "@/features/users/api/users";
 import { UserProfileCard } from "@/features/users/components/UserProfileCard";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import axios from "axios";
 
@@ -20,14 +21,13 @@ export const Route = createFileRoute("/user/$id")({
       Loading user details...
     </div>
   ),
-  loader: async ({ params }) => {
+  loader: async ({ context: { queryClient }, params }) => {
     if (Number(params.id) <= 0 || !Number.isInteger(Number(params.id))) {
       throw notFound();
     }
 
     try {
-      const user = await getUserById(params.id);
-      return { user };
+      return await queryClient.ensureQueryData(userQueryOptions(params.id));
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.status === 404) {
         throw notFound();
@@ -38,6 +38,8 @@ export const Route = createFileRoute("/user/$id")({
 });
 
 function UserRouteComponent() {
-  const { user } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const { data: user } = useSuspenseQuery(userQueryOptions(id));
+
   return <UserProfileCard user={user} />;
 }

@@ -9,6 +9,7 @@ This document outlines the finalized frontend architecture and tech stack for a 
 | **Build System & Dev Server**    | **Vite** + TypeScript         | Instant HMR, native ES modules, lightweight production bundles, zero Node.js server overhead.   |
 | **UI Framework**                 | **React 19** (Strict Mode)    | Industry-standard UI layer with vast ecosystem and long-term enterprise viability.              |
 | **Routing**                      | **TanStack Router**           | Strict end-to-end type safety, search parameters as first-class state, in-browser route tree.   |
+| **Server State & Caching**       | **TanStack Query** (v5)       | Automatic background revalidation, request deduplication, in-memory SWR cache, optimistic UI.   |
 | **Client State & Persistence**   | **Zustand** (+ `persist`)     | Lightweight (~1.1KB) providerless client state manager with native LocalStorage/IndexedDB sync. |
 | **UI Component Primitives**      | **Shadcn UI** + **Radix UI**  | Headless, 100% accessible primitives owned within codebase (no rigid npm dependency locks).     |
 | **Styling Engine**               | **Tailwind CSS v4**           | Utility-first CSS engine with zero-runtime overhead and complete design-system tokens.          |
@@ -259,6 +260,69 @@ export async function getUser(id: string): Promise<User> {
 #### **Verdict:**
 
 Combining Axios with Zod provides a centralized HTTP transport layer protected by runtime contract enforcement, eliminating unexpected runtime crashes caused by API schema drift.
+
+---
+
+### Decision 5: TanStack Query (v5) + TanStack Router Integration vs. Bare Route Loaders / Vanilla `useEffect`
+
+#### **Winner:** TanStack Query (`@tanstack/react-query`) + TanStack Router Integration (`queryClient.ensureQueryData`)
+
+#### **Context & Rationale:**
+
+Remote API data is **Server State**—it is asynchronous, shared, and can become stale over time. Relying solely on bare route loaders or vanilla `useEffect` hooks forces the application to re-fetch data from scratch on every route transition, leading to unnecessary loading spinners and network overhead. Integrating **TanStack Query** into TanStack Router via `queryClient.ensureQueryData()` provides instant page loads from in-memory cache while silently revalidating data in the background (Stale-While-Revalidate pattern).
+
+#### **Comparison Matrix:**
+
+| Feature / Metric                   | TanStack Query + TanStack Router ⭐                          | Bare Route Loader Alone                                | Vanilla `useEffect` + `useState`                     |
+| :--------------------------------- | :----------------------------------------------------------- | :----------------------------------------------------- | :--------------------------------------------------- |
+| **Route Navigation Speed**         | ⚡ **Instant** (Renders immediately from in-memory cache)    | 🔴 **Delayed** (Triggers network fetch on every visit) | 🔴 **Delayed** (Flashes loading spinner on mount)    |
+| **Background Revalidation**        | 🟢 **Automatic** (Window focus, network reconnect, interval) | 🔴 **None** (Data stays stale until page reload)       | 🔴 **None** (Requires custom event listeners)        |
+| **Request Deduplication**          | 🟢 **Automatic** (Concurrent component requests collapsed)   | 🔴 **None** (Multiple duplicate HTTP calls fire)       | 🔴 **None** (Multiple duplicate HTTP calls fire)     |
+| **Mutations & Cache Invalidation** | 🟢 **Declarative** (`useMutation` + `invalidateQueries`)     | 🔴 **Manual** (Must force page refresh or pass props)  | 🔴 **Manual** (Complex prop drilling / custom state) |
+| **Suspense Integration**           | 🟢 **Native** (`useSuspenseQuery` with type-safe loaders)    | 🟡 Basic                                               | 🔴 None                                              |
+
+#### **Key Code Comparison — Data Loading Strategy:**
+
+```tsx
+// --- Option 1: TanStack Query + Router (Instant Cache & Automatic Background Revalidation) ---
+// 1. Define query options with type-safe query keys
+export const usersQueryOptions = queryOptions({
+  queryKey: ["users"],
+  queryFn: getUsers,
+});
+
+// 2. Route loader pre-warms cache; component uses useSuspenseQuery
+export const Route = createFileRoute("/users")({
+  component: UsersComponent,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(usersQueryOptions),
+});
+
+function UsersComponent() {
+  const { data: users } = useSuspenseQuery(usersQueryOptions); // Instant load from cache!
+  return <UserListTable users={users} />;
+}
+```
+
+```tsx
+// --- Option 2: Bare Route Loader (No Caching, Spinner on Every Page Visit) ---
+export const Route = createFileRoute("/users")({
+  component: UsersComponent,
+  loader: async () => {
+    const users = await getUsers(); // Always triggers network request on route visit
+    return { users };
+  },
+});
+
+function UsersComponent() {
+  const { users } = Route.useLoaderData();
+  return <UserListTable users={users} />;
+}
+```
+
+#### **Verdict:**
+
+Integrating TanStack Query into TanStack Router route loaders delivers instant page navigation speeds, eliminates redundant network calls, and provides automated server-state revalidation across the application.
 
 ---
 
