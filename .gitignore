@@ -14,6 +14,7 @@ node_modules/
 # Output / Build
 dist/
 dist-ssr/
+.tanstack/
 *.local
 
 # Editor directories and files

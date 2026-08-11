@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import {
@@ -5,6 +6,7 @@ import {
   Link,
   Outlet,
 } from "@tanstack/react-router";
+import { LogIn, LogOut, User as UserIcon } from "lucide-react";
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -15,6 +17,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootComponent() {
+  const { user, isAuthenticated, logout } = useAuthStore();
+
+
   return (
     <div className='min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans'>
       <header className='border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50'>
@@ -40,6 +45,43 @@ function RootComponent() {
             >
               Users List
             </Link>
+            <Link
+              to='/reports'
+              className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+            >
+              Traffic Reports
+            </Link>
+
+
+            {isAuthenticated && user ? (
+              <div className='flex items-center gap-4 pl-4 border-l border-slate-800'>
+                <div className='flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300'>
+                  <UserIcon className='w-3.5 h-3.5 text-indigo-400' />
+                  <span className='font-medium text-slate-200'>
+                    {user.name}
+                  </span>
+                  <span className='px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-semibold uppercase'>
+                    {user.role}
+                  </span>
+                </div>
+                <button
+                  onClick={logout}
+                  className='text-xs px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors flex items-center gap-1.5 font-medium'
+                  title='Sign out'
+                >
+                  <LogOut className='w-3.5 h-3.5' />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to='/login'
+                className='px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors text-xs font-semibold flex items-center gap-1.5 shadow-sm shadow-indigo-500/20 [&.active]:bg-indigo-500'
+              >
+                <LogIn className='w-3.5 h-3.5' />
+                Login
+              </Link>
+            )}
           </nav>
         </div>
       </header>
