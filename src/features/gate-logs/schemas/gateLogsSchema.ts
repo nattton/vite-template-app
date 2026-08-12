@@ -27,6 +27,11 @@ export const gateLogItemSchema = z.object({
     .optional()
     .nullable()
     .transform((val) => val ?? ""),
+  licensePlateImage: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
   memberId: z
     .union([z.number(), z.string()])
     .optional()

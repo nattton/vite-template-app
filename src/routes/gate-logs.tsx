@@ -1,14 +1,7 @@
-import { useAuthStore } from "@/features/auth/store/useAuthStore";
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { requireAuth } from "@/features/auth";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/gate-logs")({
-  beforeLoad: () => {
-    const { isAuthenticated } = useAuthStore.getState();
-    if (!isAuthenticated) {
-      throw redirect({
-        to: "/login",
-      });
-    }
-  },
+  beforeLoad: requireAuth,
   component: () => <Outlet />,
 });

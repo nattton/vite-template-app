@@ -28,7 +28,7 @@ function RootComponent() {
               ⚡
             </div>
             <span className='font-semibold text-lg bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent'>
-              Enterprise SPA Architecture
+              Car Park
             </span>
           </div>
           <nav className='flex items-center gap-6 text-sm font-medium'>

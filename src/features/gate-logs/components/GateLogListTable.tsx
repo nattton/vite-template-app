@@ -1,5 +1,9 @@
 import { DatePicker } from "@/components/ui/DatePicker";
+import { ImageLightboxModal } from "@/components/ui/ImageLightboxModal";
 import { Pagination } from "@/components/ui/Pagination";
+import { useClientTable } from "@/hooks/useClientTable";
+import { getTodayDateString } from "@/utils/date";
+import { getAnprImageUrl } from "@/utils/image";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowDownLeft,
@@ -15,9 +19,8 @@ import {
   Search,
   ShieldCheck,
   User,
-  X,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { GateLogFilterParams, GateLogItem } from "../schemas/gateLogsSchema";
 
 interface GateLogListTableProps {
@@ -31,17 +34,45 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
   filters,
   onFilterChange,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [gateFilter, setGateFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
-
   const [selectedImage, setSelectedImage] = useState<{
     url: string;
     title: string;
   } | null>(null);
 
-  const getTodayDateString = () => new Date().toISOString().split("T")[0];
+  const {
+    searchTerm,
+    filterValue: gateFilter,
+    currentPage,
+    pageSize,
+    filteredData: filteredLogs,
+    paginatedData: paginatedLogs,
+    handleSearchChange,
+    handleFilterChange: setGateFilter,
+    handlePageChange: setCurrentPage,
+    handlePageSizeChange: setPageSize,
+  } = useClientTable({
+    data: logs,
+    filterFn: (item, term, gate) => {
+      const matchGate =
+        gate === "all" || item.gateName.toLowerCase() === gate.toLowerCase();
+
+      const searchLower = term.toLowerCase().trim();
+      if (!searchLower) return matchGate;
+
+      const matchPlate = item.plateNumber.toLowerCase().includes(searchLower);
+      const matchAnpr = item.anpr.toLowerCase().includes(searchLower);
+      const matchMember = item.memberName.toLowerCase().includes(searchLower);
+      const matchVisitorMember = item.visitorMemberName
+        .toLowerCase()
+        .includes(searchLower);
+
+      return (
+        matchGate &&
+        (matchPlate || matchAnpr || matchMember || matchVisitorMember)
+      );
+    },
+    defaultPageSize: 50,
+  });
 
   const handleDateFromChange = (val: string) => {
     onFilterChange({ ...filters, date: val });
@@ -53,64 +84,34 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
     setCurrentPage(1);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
+  const openImageModal = (imagePath: string, title: string) => {
+    const fullUrl = getAnprImageUrl(imagePath);
+    if (fullUrl) {
+      setSelectedImage({ url: fullUrl, title });
+    }
   };
-
-  const handleGateFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setGateFilter(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const filteredLogs = useMemo(() => {
-    return logs.filter((item) => {
-      const matchGate =
-        gateFilter === "all" || item.gateName.toLowerCase() === gateFilter;
-
-      const term = searchTerm.toLowerCase().trim();
-      if (!term) return matchGate;
-
-      const matchPlate = item.plateNumber.toLowerCase().includes(term);
-      const matchAnpr = item.anpr.toLowerCase().includes(term);
-      const matchMember = item.memberName.toLowerCase().includes(term);
-      const matchVisitorMember = item.visitorMemberName
-        .toLowerCase()
-        .includes(term);
-
-      return (
-        matchGate &&
-        (matchPlate || matchAnpr || matchMember || matchVisitorMember)
-      );
-    });
-  }, [logs, searchTerm, gateFilter]);
-
-  const paginatedLogs = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredLogs.slice(start, start + pageSize);
-  }, [filteredLogs, currentPage, pageSize]);
 
   return (
     <div className='space-y-6'>
-      {/* Header */}
+      {/* Header Banner */}
       <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6'>
         <div>
           <div className='inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2'>
-            <ShieldCheck className='w-3.5 h-3.5' /> ANPR Gate Audit Stream
+            <ShieldCheck className='w-3.5 h-3.5' /> ANPR Surveillance Stream
           </div>
           <h1 className='text-3xl font-extrabold text-white tracking-tight'>
-            Gate Transaction Logs
+            Gate Access Logs
           </h1>
           <p className='text-slate-400 text-sm mt-1'>
-            Real-time optical license plate recognition (ANPR) event history
-            across all gates.
+            Real-time automatic number-plate recognition (ANPR) detection log
+            history and barrier triggers.
           </p>
         </div>
       </div>
 
-      {/* Date & Filter Controls */}
+      {/* Date Filter & Search Toolbar */}
       <div className='flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md'>
-        {/* Search Input */}
+        {/* Search Bar */}
         <div className='relative flex-1'>
           <div className='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500'>
             <Search className='w-4 h-4' />
@@ -118,13 +119,13 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
           <input
             type='text'
             value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder='Search license plate, ANPR, member unit...'
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder='Search license plate, ANPR raw code, resident unit...'
             className='w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors'
           />
         </div>
 
-        {/* Date & Gate Filter Inputs */}
+        {/* Filters */}
         <div className='flex flex-wrap items-center gap-3'>
           <div className='flex items-center gap-2 text-xs font-semibold uppercase text-slate-400'>
             <Calendar className='w-3.5 h-3.5 text-cyan-400' />
@@ -155,21 +156,21 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
           {/* Gate Direction Filter */}
           <div className='flex items-center gap-2 text-xs font-semibold uppercase text-slate-400 ml-2'>
             <Filter className='w-3.5 h-3.5 text-cyan-400' />
-            <span>Gate:</span>
+            <span>Direction:</span>
           </div>
           <select
             value={gateFilter}
-            onChange={handleGateFilterChange}
+            onChange={(e) => setGateFilter(e.target.value)}
             className='px-3 py-1.5 bg-slate-950/80 border border-slate-800 focus:border-cyan-500 rounded-xl text-slate-200 text-xs appearance-none transition-colors'
           >
             <option value='all'>All Gates</option>
-            <option value='in'>IN Gate Entry</option>
-            <option value='out'>OUT Gate Exit</option>
+            <option value='in'>IN Gate Only</option>
+            <option value='out'>OUT Gate Only</option>
           </select>
         </div>
       </div>
 
-      {/* Gate Logs Table */}
+      {/* Main Gate Log Table */}
       <div className='rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl overflow-hidden backdrop-blur-md'>
         <div className='overflow-x-auto'>
           <table className='w-full text-left text-sm text-slate-300'>
@@ -178,10 +179,10 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
                 <th className='px-6 py-4'>ID</th>
                 <th className='px-6 py-4'>Timestamp</th>
                 <th className='px-6 py-4'>Gate</th>
-                <th className='px-6 py-4'>License Plate (ANPR)</th>
-                <th className='px-6 py-4'>Associated Unit / Member</th>
-                <th className='px-6 py-4 text-center'>Capture Preview</th>
-                <th className='px-6 py-4 text-right'>Details</th>
+                <th className='px-6 py-4'>License Plate</th>
+                <th className='px-6 py-4'>Snapshots</th>
+                <th className='px-6 py-4'>Resident Member</th>
+                <th className='px-6 py-4'>Visitor Reference</th>
               </tr>
             </thead>
             <tbody className='divide-y divide-slate-800/60'>
@@ -191,27 +192,23 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
                     colSpan={7}
                     className='px-6 py-12 text-center text-slate-500 font-medium'
                   >
-                    No gate transactions found for the selected date range.
+                    No gate activity logs found for the selected filter
+                    criteria.
                   </td>
                 </tr>
               ) : (
                 paginatedLogs.map((log) => {
-                  const isIn = log.gateName.toLowerCase() === "in";
-                  const formattedTime = log.createdAt
+                  const isInGate = log.gateName.toLowerCase() === "in";
+                  const timeFormatted = log.createdAt
                     ? new Date(log.createdAt).toLocaleString("th-TH")
                     : "—";
-
-                  const imageUrl = log.captureImage
-                    ? log.captureImage.startsWith("http")
-                      ? log.captureImage
-                      : `http://localhost:4000/anpr_store${log.captureImage}`
-                    : null;
 
                   return (
                     <tr
                       key={log.id}
                       className='hover:bg-slate-800/40 transition-colors group'
                     >
+                      {/* ID */}
                       <td className='px-6 py-4 font-mono text-xs text-slate-500'>
                         #{log.id}
                       </td>
@@ -219,130 +216,117 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
                       {/* Timestamp */}
                       <td className='px-6 py-4 text-xs font-mono text-slate-300'>
                         <div className='flex items-center gap-1.5'>
-                          <Clock className='w-3.5 h-3.5 text-slate-500' />
-                          <span>{formattedTime}</span>
+                          <Clock className='w-3.5 h-3.5 text-cyan-400' />
+                          <span>{timeFormatted}</span>
                         </div>
                       </td>
 
-                      {/* Gate Name Badge */}
+                      {/* Gate Direction */}
                       <td className='px-6 py-4'>
-                        {isIn ? (
-                          <span className='inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'>
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${
+                            isInGate
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                              : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                          }`}
+                        >
+                          {isInGate ? (
                             <ArrowDownLeft className='w-3.5 h-3.5' />
-                            IN GATE
-                          </span>
-                        ) : (
-                          <span className='inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30'>
+                          ) : (
                             <ArrowUpRight className='w-3.5 h-3.5' />
-                            OUT GATE
-                          </span>
-                        )}
+                          )}
+                          <span>Gate {log.gateName}</span>
+                        </span>
                       </td>
 
                       {/* License Plate */}
                       <td className='px-6 py-4'>
-                        <div className='flex items-center gap-2'>
-                          <Car className='w-4 h-4 text-cyan-400 shrink-0' />
-                          <span className='font-mono font-bold text-base text-cyan-300 group-hover:text-cyan-200 transition-colors'>
-                            {log.plateNumber || log.anpr || "UNKNOWN"}
+                        <div className='font-mono font-bold text-base text-cyan-300 flex items-center gap-2'>
+                          <Car className='w-4 h-4 text-cyan-400/80 shrink-0' />
+                          <span>
+                            {log.plateNumber || log.anpr || "NO PLATE"}
                           </span>
+                        </div>
+                        {log.anpr && log.anpr !== log.plateNumber && (
+                          <p className='text-[11px] font-mono text-slate-500 mt-0.5'>
+                            ANPR: {log.anpr}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Camera Snapshots Lightbox Trigger */}
+                      <td className='px-6 py-4'>
+                        <div className='flex items-center gap-2'>
+                          {log.captureImage ? (
+                            <button
+                              onClick={() =>
+                                openImageModal(
+                                  log.captureImage!,
+                                  `Overview Snapshot - Plate ${log.plateNumber} (${log.gateName.toUpperCase()})`,
+                                )
+                              }
+                              className='px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-cyan-500/20 hover:border-cyan-500/40 text-slate-300 hover:text-cyan-300 border border-slate-700 transition-colors flex items-center gap-1 text-xs font-medium'
+                              title='View vehicle capture image'
+                            >
+                              <Camera className='w-3.5 h-3.5 text-cyan-400' />
+                              <span>Overview</span>
+                            </button>
+                          ) : (
+                            <span className='text-xs text-slate-600'>
+                              No image
+                            </span>
+                          )}
+
+                          {log.licensePlateImage && (
+                            <button
+                              onClick={() =>
+                                openImageModal(
+                                  log.licensePlateImage!,
+                                  `Plate Snapshot - Plate ${log.plateNumber} (${log.gateName.toUpperCase()})`,
+                                )
+                              }
+                              className='px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-indigo-500/20 hover:border-indigo-500/40 text-slate-300 hover:text-indigo-300 border border-slate-700 transition-colors flex items-center gap-1 text-xs font-medium'
+                              title='View license plate crop image'
+                            >
+                              <ImageIcon className='w-3.5 h-3.5 text-indigo-400' />
+                              <span>Plate</span>
+                            </button>
+                          )}
                         </div>
                       </td>
 
-                      {/* Member / Visitor Unit */}
+                      {/* Resident Member Link */}
                       <td className='px-6 py-4'>
-                        {log.memberName && log.memberName !== "visitor" ? (
-                          <div className='flex items-center gap-2'>
-                            <Building className='w-3.5 h-3.5 text-indigo-400' />
-                            <span className='font-semibold text-slate-200'>
-                              Unit {log.memberName}
-                            </span>
-                            {log.memberId > 0 && (
-                              <Link
-                                to='/members/$id'
-                                params={{ id: String(log.memberId) }}
-                                preload='intent'
-                                className='text-[11px] font-mono text-indigo-400 hover:underline'
-                              >
-                                (#{log.memberId})
-                              </Link>
-                            )}
-                          </div>
-                        ) : log.visitorMemberName ? (
-                          <div className='flex items-center gap-2'>
-                            <User className='w-3.5 h-3.5 text-amber-400' />
-                            <span className='font-medium text-amber-300'>
-                              Visitor to {log.visitorMemberName}
-                            </span>
-                            {log.visitorId > 0 && (
-                              <Link
-                                to='/visitors/$id'
-                                params={{ id: String(log.visitorId) }}
-                                preload='intent'
-                                className='text-[11px] font-mono text-amber-400 hover:underline'
-                              >
-                                (Visitor #{log.visitorId})
-                              </Link>
-                            )}
-                          </div>
-                        ) : (
-                          <span className='text-xs text-slate-500 italic'>
-                            General Visitor
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Image Thumbnail */}
-                      <td className='px-6 py-4 text-center'>
-                        {imageUrl ? (
-                          <button
-                            onClick={() =>
-                              setSelectedImage({
-                                url: imageUrl,
-                                title: `Plate ${log.plateNumber || log.anpr} (${log.gateName.toUpperCase()} Gate)`,
-                              })
-                            }
-                            className='relative inline-block rounded-xl overflow-hidden border border-slate-700 hover:border-cyan-400 transition-all group/img'
-                          >
-                            <img
-                              src={imageUrl}
-                              alt={log.anpr}
-                              className='w-16 h-10 object-cover group-hover/img:scale-110 transition-transform'
-                            />
-                            <div className='absolute inset-0 bg-slate-950/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-cyan-300'>
-                              <ImageIcon className='w-4 h-4' />
-                            </div>
-                          </button>
-                        ) : (
-                          <span className='text-xs text-slate-600 italic'>
-                            No Capture
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Action Details */}
-                      <td className='px-6 py-4 text-right'>
-                        {log.visitorId > 0 ? (
-                          <Link
-                            to='/visitors/$id'
-                            params={{ id: String(log.visitorId) }}
-                            preload='intent'
-                            className='p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors inline-flex items-center gap-1 text-xs font-semibold'
-                            title='View visitor record'
-                          >
-                            <span>Visitor</span>
-                            <ChevronRight className='w-3.5 h-3.5' />
-                          </Link>
-                        ) : log.memberId > 0 ? (
+                        {log.memberId > 0 && log.memberName ? (
                           <Link
                             to='/members/$id'
                             params={{ id: String(log.memberId) }}
                             preload='intent'
-                            className='p-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 transition-colors inline-flex items-center gap-1 text-xs font-semibold'
-                            title='View member unit'
+                            className='inline-flex items-center gap-1.5 font-semibold text-slate-200 hover:text-cyan-400 transition-colors group/link'
                           >
-                            <span>Member</span>
-                            <ChevronRight className='w-3.5 h-3.5' />
+                            <Building className='w-3.5 h-3.5 text-indigo-400' />
+                            <span>{log.memberName}</span>
+                            <ChevronRight className='w-3.5 h-3.5 text-slate-500 group-hover/link:translate-x-0.5 transition-transform' />
+                          </Link>
+                        ) : (
+                          <span className='text-xs text-slate-600 italic'>
+                            Non-Member
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Visitor Link */}
+                      <td className='px-6 py-4'>
+                        {log.visitorId && log.visitorId > 0 ? (
+                          <Link
+                            to='/visitors/$id'
+                            params={{ id: String(log.visitorId) }}
+                            preload='intent'
+                            className='inline-flex items-center gap-1.5 font-semibold text-amber-300 hover:text-amber-400 transition-colors group/link'
+                          >
+                            <User className='w-3.5 h-3.5 text-amber-400' />
+                            <span>Visitor #{log.visitorId}</span>
+                            <ChevronRight className='w-3.5 h-3.5 text-slate-500 group-hover/link:translate-x-0.5 transition-transform' />
                           </Link>
                         ) : (
                           <span className='text-xs text-slate-600'>—</span>
@@ -370,31 +354,12 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
       </div>
 
       {/* Lightbox Image Preview Modal */}
-      {selectedImage && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-200'>
-          <div className='relative max-w-4xl w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl space-y-4 p-6'>
-            <div className='flex items-center justify-between border-b border-slate-800 pb-3'>
-              <h3 className='text-base font-bold text-slate-100 flex items-center gap-2'>
-                <Camera className='w-5 h-5 text-cyan-400' />
-                <span>{selectedImage.title}</span>
-              </h3>
-              <button
-                onClick={() => setSelectedImage(null)}
-                className='p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors'
-              >
-                <X className='w-5 h-5' />
-              </button>
-            </div>
-            <div className='rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center max-h-[70vh]'>
-              <img
-                src={selectedImage.url}
-                alt='ANPR Full Capture'
-                className='w-full h-full object-contain max-h-[70vh]'
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <ImageLightboxModal
+        isOpen={Boolean(selectedImage)}
+        onClose={() => setSelectedImage(null)}
+        imageUrl={selectedImage?.url || ""}
+        title={selectedImage?.title || ""}
+      />
     </div>
   );
 };
