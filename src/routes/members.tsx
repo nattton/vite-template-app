@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/users")({
+export const Route = createFileRoute("/members")({
   beforeLoad: () => {
     const { isAuthenticated } = useAuthStore.getState();
     if (!isAuthenticated) {

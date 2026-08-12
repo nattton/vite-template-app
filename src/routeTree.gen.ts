@@ -11,8 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MembersRouteImport } from './routes/members'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as UsersRouteImport } from './routes/users'
+import { Route as MembersIndexRouteImport } from './routes/members.index'
+import { Route as MembersIdRouteImport } from './routes/members.$id'
+import { Route as UsersIndexRouteImport } from './routes/users.index'
 import { Route as UsersIdRouteImport } from './routes/users.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -25,6 +29,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MembersRoute = MembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportsRoute = ReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -35,6 +44,21 @@ const UsersRoute = UsersRouteImport.update({
   path: '/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MembersIndexRoute = MembersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MembersRoute,
+} as any)
+const MembersIdRoute = MembersIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => MembersRoute,
+} as any)
+const UsersIndexRoute = UsersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => UsersRoute,
+} as any)
 const UsersIdRoute = UsersIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -44,36 +68,73 @@ const UsersIdRoute = UsersIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/members': typeof MembersRouteWithChildren
   '/reports': typeof ReportsRoute
   '/users': typeof UsersRouteWithChildren
+  '/members/$id': typeof MembersIdRoute
   '/users/$id': typeof UsersIdRoute
+  '/members/': typeof MembersIndexRoute
+  '/users/': typeof UsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/reports': typeof ReportsRoute
-  '/users': typeof UsersRouteWithChildren
+  '/members/$id': typeof MembersIdRoute
   '/users/$id': typeof UsersIdRoute
+  '/members': typeof MembersIndexRoute
+  '/users': typeof UsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/members': typeof MembersRouteWithChildren
   '/reports': typeof ReportsRoute
   '/users': typeof UsersRouteWithChildren
+  '/members/$id': typeof MembersIdRoute
   '/users/$id': typeof UsersIdRoute
+  '/members/': typeof MembersIndexRoute
+  '/users/': typeof UsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/reports' | '/users' | '/users/$id'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/members'
+    | '/reports'
+    | '/users'
+    | '/members/$id'
+    | '/users/$id'
+    | '/members/'
+    | '/users/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/reports' | '/users' | '/users/$id'
-  id: '__root__' | '/' | '/login' | '/reports' | '/users' | '/users/$id'
+  to:
+    | '/'
+    | '/login'
+    | '/reports'
+    | '/members/$id'
+    | '/users/$id'
+    | '/members'
+    | '/users'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/members'
+    | '/reports'
+    | '/users'
+    | '/members/$id'
+    | '/users/$id'
+    | '/members/'
+    | '/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  MembersRoute: typeof MembersRouteWithChildren
   ReportsRoute: typeof ReportsRoute
   UsersRoute: typeof UsersRouteWithChildren
 }
@@ -94,6 +155,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/members': {
+      id: '/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reports': {
       id: '/reports'
       path: '/reports'
@@ -108,6 +176,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/members/': {
+      id: '/members/'
+      path: '/'
+      fullPath: '/members/'
+      preLoaderRoute: typeof MembersIndexRouteImport
+      parentRoute: typeof MembersRoute
+    }
+    '/members/$id': {
+      id: '/members/$id'
+      path: '/$id'
+      fullPath: '/members/$id'
+      preLoaderRoute: typeof MembersIdRouteImport
+      parentRoute: typeof MembersRoute
+    }
+    '/users/': {
+      id: '/users/'
+      path: '/'
+      fullPath: '/users/'
+      preLoaderRoute: typeof UsersIndexRouteImport
+      parentRoute: typeof UsersRoute
+    }
     '/users/$id': {
       id: '/users/$id'
       path: '/$id'
@@ -118,12 +207,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MembersRouteChildren {
+  MembersIdRoute: typeof MembersIdRoute
+  MembersIndexRoute: typeof MembersIndexRoute
+}
+
+const MembersRouteChildren: MembersRouteChildren = {
+  MembersIdRoute: MembersIdRoute,
+  MembersIndexRoute: MembersIndexRoute,
+}
+
+const MembersRouteWithChildren =
+  MembersRoute._addFileChildren(MembersRouteChildren)
+
 interface UsersRouteChildren {
   UsersIdRoute: typeof UsersIdRoute
+  UsersIndexRoute: typeof UsersIndexRoute
 }
 
 const UsersRouteChildren: UsersRouteChildren = {
   UsersIdRoute: UsersIdRoute,
+  UsersIndexRoute: UsersIndexRoute,
 }
 
 const UsersRouteWithChildren = UsersRoute._addFileChildren(UsersRouteChildren)
@@ -131,6 +235,7 @@ const UsersRouteWithChildren = UsersRoute._addFileChildren(UsersRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  MembersRoute: MembersRouteWithChildren,
   ReportsRoute: ReportsRoute,
   UsersRoute: UsersRouteWithChildren,
 }

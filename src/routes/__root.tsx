@@ -38,6 +38,14 @@ function RootComponent() {
             >
               Dashboard
             </Link>
+            {isAuthenticated && (
+              <Link
+                to='/members'
+                className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+              >
+                Members
+              </Link>
+            )}
             {isAuthenticated && user?.role === "admin" && (
               <>
                 <Link
