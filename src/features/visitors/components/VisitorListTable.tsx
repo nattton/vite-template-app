@@ -1,4 +1,5 @@
 import { DatePicker } from "@/components/ui/DatePicker";
+import { Pagination } from "@/components/ui/Pagination";
 import { Link } from "@tanstack/react-router";
 import {
   Building,
@@ -30,19 +31,32 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const checkoutMutation = useCheckoutVisitorMutation();
 
-  // Helper for today's date string YYYY-MM-DD
   const getTodayDateString = () => new Date().toISOString().split("T")[0];
 
   const handleDateFromChange = (val: string) => {
     onFilterChange({ ...filters, date: val });
+    setCurrentPage(1);
   };
 
   const handleDateToChange = (val: string) => {
     onFilterChange({ ...filters, dateTo: val });
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
   };
 
   const filteredVisitors = useMemo(() => {
@@ -57,21 +71,28 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
       if (!term) return matchStatus;
 
       const matchPlate = v.plateNumber?.toLowerCase().includes(term);
-      const matchName = v.thaiName?.toLowerCase().includes(term) || v.engName?.toLowerCase().includes(term);
+      const matchName =
+        v.thaiName?.toLowerCase().includes(term) ||
+        v.engName?.toLowerCase().includes(term);
       const matchIdCard = v.idCard?.toLowerCase().includes(term);
       const matchMember = v.member?.name?.toLowerCase().includes(term);
 
-      return matchStatus && (matchPlate || matchName || matchIdCard || matchMember);
+      return (
+        matchStatus && (matchPlate || matchName || matchIdCard || matchMember)
+      );
     });
   }, [visitors, searchTerm, statusFilter]);
 
+  const paginatedVisitors = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredVisitors.slice(start, start + pageSize);
+  }, [filteredVisitors, currentPage, pageSize]);
+
   const handleQuickCheckout = async (visitor: Visitor) => {
     if (!visitor.createdAt) return;
-    
-    // Barcode format in carpark is shortNanolayout (YYYYMMDDHHMMSS.000)
-    // We convert visitor.createdAt into shortNanolayout format for checkout API
+
     const dateObj = new Date(visitor.createdAt);
-    const pad = (n: number, z = 2) => String(n).padStart(z, '0');
+    const pad = (n: number, z = 2) => String(n).padStart(z, "0");
     const barcodeStr = `${dateObj.getFullYear()}${pad(dateObj.getMonth() + 1)}${pad(dateObj.getDate())}${pad(dateObj.getHours())}${pad(dateObj.getMinutes())}${pad(dateObj.getSeconds())}.000`;
 
     if (
@@ -125,7 +146,7 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
           <input
             type='text'
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             placeholder='Search plate number, visitor name, member unit...'
             className='w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors'
           />
@@ -164,7 +185,7 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={handleStatusFilterChange}
             className='px-3 py-1.5 bg-slate-950/80 border border-slate-800 focus:border-amber-500 rounded-xl text-slate-200 text-xs appearance-none transition-colors'
           >
             <option value='all'>All Records</option>
@@ -190,7 +211,7 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
               </tr>
             </thead>
             <tbody className='divide-y divide-slate-800/60'>
-              {filteredVisitors.length === 0 ? (
+              {paginatedVisitors.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -200,7 +221,7 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredVisitors.map((visitor) => {
+                paginatedVisitors.map((visitor) => {
                   const isOnSite = !visitor.exitTime;
                   const entryFormatted = visitor.createdAt
                     ? new Date(visitor.createdAt).toLocaleString("th-TH")
@@ -223,6 +244,7 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
                         <Link
                           to='/visitors/$id'
                           params={{ id: String(visitor.id) }}
+                          preload='intent'
                           className='font-mono font-bold text-base text-amber-300 group-hover:text-amber-400 transition-colors flex items-center gap-2'
                         >
                           <Car className='w-4 h-4 text-amber-400/80 shrink-0' />
@@ -294,6 +316,7 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
                           <Link
                             to='/visitors/$id'
                             params={{ id: String(visitor.id) }}
+                            preload='intent'
                             className='p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors'
                             title='View details'
                           >
@@ -309,14 +332,17 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
           </table>
         </div>
 
-        {/* Footer */}
-        <div className='px-6 py-4 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between'>
-          <span>
-            Showing <strong className='text-slate-200'>{filteredVisitors.length}</strong> of{" "}
-            <strong className='text-slate-200'>{visitors.length}</strong> visitor entries
-          </span>
-          <span className='font-mono text-slate-500'>CARPARK Gate API</span>
-        </div>
+        {/* Pagination Bar */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={visitors.length}
+          filteredCount={filteredVisitors.length}
+          showingCount={paginatedVisitors.length}
+          itemLabel='visitor entries'
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Register Modal */}

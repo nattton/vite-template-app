@@ -1,7 +1,7 @@
+import { Pagination } from "@/components/ui/Pagination";
 import { Link } from "@tanstack/react-router";
 import {
   Car,
-  ChevronLeft,
   ChevronRight,
   Edit2,
   Filter,
@@ -27,7 +27,7 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 50;
+  const [pageSize, setPageSize] = useState(50);
 
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [memberToEdit, setMemberToEdit] = useState<Member | null>(null);
@@ -42,7 +42,9 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
     setCurrentPage(1);
   };
 
-  const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusFilterChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
     setStatusFilter(e.target.value);
     setCurrentPage(1);
   };
@@ -66,11 +68,13 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
           v.color?.toLowerCase().includes(term),
       );
 
-      return matchStatus && (matchName || matchPhone || matchAddress || matchVehicles);
+      return (
+        matchStatus &&
+        (matchName || matchPhone || matchAddress || matchVehicles)
+      );
     });
   }, [members, searchTerm, statusFilter]);
 
-  const totalPages = Math.ceil(filteredMembers.length / pageSize) || 1;
   const paginatedMembers = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredMembers.slice(start, start + pageSize);
@@ -92,7 +96,11 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
   };
 
   const handleDelete = async (member: Member) => {
-    if (window.confirm(`Are you sure you want to delete member unit "${member.name}"?`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete member unit "${member.name}"?`,
+      )
+    ) {
       try {
         await deleteMutation.mutateAsync(member.id);
       } catch (err: any) {
@@ -113,7 +121,8 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
             Resident Members Directory
           </h1>
           <p className='text-slate-400 text-sm mt-1'>
-            Manage residential unit profiles, registered vehicles, contact numbers, and access rights.
+            Manage residential unit profiles, registered vehicles, contact
+            numbers, and access rights.
           </p>
         </div>
 
@@ -189,12 +198,28 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
                 paginatedMembers.map((member) => {
                   const statusStyle =
                     member.status?.toLowerCase() === "active"
-                      ? { badge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-400 animate-pulse" }
+                      ? {
+                          badge:
+                            "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+                          dot: "bg-emerald-400 animate-pulse",
+                        }
                       : member.status?.toLowerCase() === "overdue"
-                      ? { badge: "bg-rose-500/10 text-rose-400 border-rose-500/30", dot: "bg-rose-400 animate-ping" }
-                      : member.status?.toLowerCase() === "suspended"
-                      ? { badge: "bg-red-500/10 text-red-400 border-red-500/30", dot: "bg-red-400" }
-                      : { badge: "bg-amber-500/10 text-amber-400 border-amber-500/30", dot: "bg-amber-400" };
+                        ? {
+                            badge:
+                              "bg-rose-500/10 text-rose-400 border-rose-500/30",
+                            dot: "bg-rose-400 animate-ping",
+                          }
+                        : member.status?.toLowerCase() === "suspended"
+                          ? {
+                              badge:
+                                "bg-red-500/10 text-red-400 border-red-500/30",
+                              dot: "bg-red-400",
+                            }
+                          : {
+                              badge:
+                                "bg-amber-500/10 text-amber-400 border-amber-500/30",
+                              dot: "bg-amber-400",
+                            };
 
                   return (
                     <tr
@@ -239,7 +264,9 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusStyle.badge}`}
                         >
-                          <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`} />
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot}`}
+                          />
                           {member.status || "active"}
                         </span>
                       </td>
@@ -309,39 +336,17 @@ export const MemberListTable: React.FC<MemberListTableProps> = ({
           </table>
         </div>
 
-        {/* Footer & Pagination Bar */}
-        <div className='px-6 py-4 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-3'>
-          <span>
-            Showing <strong className='text-slate-200'>{paginatedMembers.length}</strong> of{" "}
-            <strong className='text-slate-200'>{filteredMembers.length}</strong> filtered members (Total: {members.length})
-          </span>
-
-          {totalPages > 1 && (
-            <div className='flex items-center gap-2'>
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-                className='px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 transition-colors flex items-center gap-1 text-xs'
-              >
-                <ChevronLeft className='w-3.5 h-3.5' />
-                <span>Prev</span>
-              </button>
-
-              <span className='font-mono text-slate-300 px-2'>
-                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
-              </span>
-
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className='px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 transition-colors flex items-center gap-1 text-xs'
-              >
-                <span>Next</span>
-                <ChevronRight className='w-3.5 h-3.5' />
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Pagination Bar */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={members.length}
+          filteredCount={filteredMembers.length}
+          showingCount={paginatedMembers.length}
+          itemLabel='members'
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Member Create/Edit Modal */}

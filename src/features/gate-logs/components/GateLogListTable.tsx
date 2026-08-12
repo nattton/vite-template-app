@@ -1,4 +1,5 @@
 import { DatePicker } from "@/components/ui/DatePicker";
+import { Pagination } from "@/components/ui/Pagination";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowDownLeft,
@@ -32,6 +33,9 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [gateFilter, setGateFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
+
   const [selectedImage, setSelectedImage] = useState<{
     url: string;
     title: string;
@@ -41,10 +45,22 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
 
   const handleDateFromChange = (val: string) => {
     onFilterChange({ ...filters, date: val });
+    setCurrentPage(1);
   };
 
   const handleDateToChange = (val: string) => {
     onFilterChange({ ...filters, dateTo: val });
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleGateFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setGateFilter(e.target.value);
+    setCurrentPage(1);
   };
 
   const filteredLogs = useMemo(() => {
@@ -68,6 +84,11 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
       );
     });
   }, [logs, searchTerm, gateFilter]);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLogs.slice(start, start + pageSize);
+  }, [filteredLogs, currentPage, pageSize]);
 
   return (
     <div className='space-y-6'>
@@ -97,7 +118,7 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
           <input
             type='text'
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
             placeholder='Search license plate, ANPR, member unit...'
             className='w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl text-slate-100 placeholder-slate-500 text-sm transition-colors'
           />
@@ -113,7 +134,9 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
           <div className='w-40'>
             <DatePicker
               value={filters.date || getTodayDateString()}
-              onChange={(val) => handleDateFromChange(val || getTodayDateString())}
+              onChange={(val) =>
+                handleDateFromChange(val || getTodayDateString())
+              }
               placeholder='Select start date'
             />
           </div>
@@ -136,7 +159,7 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
           </div>
           <select
             value={gateFilter}
-            onChange={(e) => setGateFilter(e.target.value)}
+            onChange={handleGateFilterChange}
             className='px-3 py-1.5 bg-slate-950/80 border border-slate-800 focus:border-cyan-500 rounded-xl text-slate-200 text-xs appearance-none transition-colors'
           >
             <option value='all'>All Gates</option>
@@ -162,7 +185,7 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
               </tr>
             </thead>
             <tbody className='divide-y divide-slate-800/60'>
-              {filteredLogs.length === 0 ? (
+              {paginatedLogs.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -172,7 +195,7 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredLogs.map((log) => {
+                paginatedLogs.map((log) => {
                   const isIn = log.gateName.toLowerCase() === "in";
                   const formattedTime = log.createdAt
                     ? new Date(log.createdAt).toLocaleString("th-TH")
@@ -333,16 +356,17 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
           </table>
         </div>
 
-        {/* Footer */}
-        <div className='px-6 py-4 bg-slate-950/60 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between'>
-          <span>
-            Showing{" "}
-            <strong className='text-slate-200'>{filteredLogs.length}</strong> of{" "}
-            <strong className='text-slate-200'>{logs.length}</strong> ANPR gate
-            logs
-          </span>
-          <span className='font-mono text-slate-500'>CARPARK ANPR Engine</span>
-        </div>
+        {/* Pagination Bar */}
+        <Pagination
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalItems={logs.length}
+          filteredCount={filteredLogs.length}
+          showingCount={paginatedLogs.length}
+          itemLabel='ANPR gate logs'
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       {/* Lightbox Image Preview Modal */}
