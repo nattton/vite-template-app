@@ -1,3 +1,4 @@
+import { DatePicker } from "@/components/ui/DatePicker";
 import { Link } from "@tanstack/react-router";
 import {
   Building,
@@ -137,22 +138,24 @@ export const VisitorListTable: React.FC<VisitorListTableProps> = ({
             <span>Date:</span>
           </div>
 
-          <input
-            type='date'
-            value={filters.date || getTodayDateString()}
-            onChange={(e) => handleDateFromChange(e.target.value)}
-            className='px-3 py-1.5 bg-slate-950/80 border border-slate-800 focus:border-amber-500 rounded-xl text-slate-200 text-xs transition-colors'
-          />
+          <div className='w-40'>
+            <DatePicker
+              value={filters.date || getTodayDateString()}
+              onChange={(val) => handleDateFromChange(val || getTodayDateString())}
+              placeholder='Select start date'
+            />
+          </div>
 
           <span className='text-xs text-slate-500'>to</span>
 
-          <input
-            type='date'
-            value={filters.dateTo || ""}
-            onChange={(e) => handleDateToChange(e.target.value)}
-            placeholder='End Date'
-            className='px-3 py-1.5 bg-slate-950/80 border border-slate-800 focus:border-amber-500 rounded-xl text-slate-200 text-xs transition-colors'
-          />
+          <div className='w-40'>
+            <DatePicker
+              value={filters.dateTo}
+              onChange={(val) => handleDateToChange(val || "")}
+              placeholder='Select end date'
+              isOptional
+            />
+          </div>
 
           {/* Status Filter Dropdown */}
           <div className='flex items-center gap-2 text-xs font-semibold uppercase text-slate-400 ml-2'>

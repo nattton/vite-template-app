@@ -1,8 +1,7 @@
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { VisitorDetailCard, visitorQueryOptions } from "@/features/visitors";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
-import axios from "axios";
 
 export const Route = createFileRoute("/visitors/$id")({
   beforeLoad: () => {
@@ -24,30 +23,39 @@ export const Route = createFileRoute("/visitors/$id")({
       Error loading visitor details: {error.message}
     </div>
   ),
-  pendingComponent: () => (
-    <div className='p-12 text-center text-slate-400 animate-pulse'>
-      Loading visitor entry details...
-    </div>
-  ),
-  loader: async ({ context: { queryClient }, params }) => {
+  loader: ({ context: { queryClient }, params }) => {
     if (Number(params.id) <= 0 || !Number.isInteger(Number(params.id))) {
       throw notFound();
     }
-
-    try {
-      return await queryClient.ensureQueryData(visitorQueryOptions(params.id));
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
-        throw notFound();
-      }
-      throw err;
-    }
+    // Prefetch query asynchronously so navigation renders instantly without blocking
+    queryClient.prefetchQuery(visitorQueryOptions(params.id));
   },
 });
 
 function VisitorRouteComponent() {
   const { id } = Route.useParams();
-  const { data: visitor } = useSuspenseQuery(visitorQueryOptions(id));
+  const {
+    data: visitor,
+    isLoading,
+    isError,
+    error,
+  } = useQuery(visitorQueryOptions(id));
+
+  if (isLoading) {
+    return (
+      <div className='p-12 text-center text-slate-400 animate-pulse font-medium'>
+        Loading visitor entry details...
+      </div>
+    );
+  }
+
+  if (isError || !visitor) {
+    return (
+      <div className='p-8 text-center text-red-500 font-semibold'>
+        Error loading visitor details: {error?.message || "Visitor entry not found"}
+      </div>
+    );
+  }
 
   return <VisitorDetailCard visitor={visitor} />;
 }

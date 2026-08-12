@@ -1,8 +1,7 @@
 import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { MemberDetailCard, memberQueryOptions } from "@/features/members";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
-import axios from "axios";
 
 export const Route = createFileRoute("/members/$id")({
   beforeLoad: () => {
@@ -24,30 +23,39 @@ export const Route = createFileRoute("/members/$id")({
       Error loading member details: {error.message}
     </div>
   ),
-  pendingComponent: () => (
-    <div className='p-12 text-center text-slate-400 animate-pulse'>
-      Loading member unit details...
-    </div>
-  ),
-  loader: async ({ context: { queryClient }, params }) => {
+  loader: ({ context: { queryClient }, params }) => {
     if (Number(params.id) <= 0 || !Number.isInteger(Number(params.id))) {
       throw notFound();
     }
-
-    try {
-      return await queryClient.ensureQueryData(memberQueryOptions(params.id));
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 404) {
-        throw notFound();
-      }
-      throw err;
-    }
+    // Prefetch query asynchronously so navigation renders instantly without blocking
+    queryClient.prefetchQuery(memberQueryOptions(params.id));
   },
 });
 
 function MemberRouteComponent() {
   const { id } = Route.useParams();
-  const { data: member } = useSuspenseQuery(memberQueryOptions(id));
+  const {
+    data: member,
+    isLoading,
+    isError,
+    error,
+  } = useQuery(memberQueryOptions(id));
+
+  if (isLoading) {
+    return (
+      <div className='p-12 text-center text-slate-400 animate-pulse font-medium'>
+        Loading member unit details...
+      </div>
+    );
+  }
+
+  if (isError || !member) {
+    return (
+      <div className='p-8 text-center text-red-500 font-semibold'>
+        Error loading member details: {error?.message || "Member not found"}
+      </div>
+    );
+  }
 
   return <MemberDetailCard member={member} />;
 }

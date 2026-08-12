@@ -1,6 +1,6 @@
+import { DatePicker } from "@/components/ui/DatePicker";
 import {
   AlertCircle,
-  Calendar,
   CreditCard,
   Globe,
   MapPin,
@@ -313,18 +313,11 @@ export const RegisteredUserModal: React.FC<RegisteredUserModalProps> = ({
               <label className='block text-xs font-semibold uppercase tracking-wider text-slate-300'>
                 Expired Date <span className='text-red-400'>*</span>
               </label>
-              <div className='relative'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500'>
-                  <Calendar className='w-4 h-4' />
-                </div>
-                <input
-                  type='date'
-                  value={expiredDate}
-                  onChange={(e) => setExpiredDate(e.target.value)}
-                  required
-                  className='w-full pl-9 pr-4 py-2 bg-slate-950/80 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-slate-100 text-sm transition-colors'
-                />
-              </div>
+              <DatePicker
+                value={expiredDate}
+                onChange={(val) => setExpiredDate(val || "")}
+                placeholder='Select expiration date'
+              />
             </div>
           </div>
 

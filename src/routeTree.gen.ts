@@ -10,12 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GateLogsRouteImport } from './routes/gate-logs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as RegisteredUsersRouteImport } from './routes/registered-users'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as VisitorsRouteImport } from './routes/visitors'
+import { Route as GateLogsIndexRouteImport } from './routes/gate-logs.index'
 import { Route as MembersIndexRouteImport } from './routes/members.index'
 import { Route as MembersIdRouteImport } from './routes/members.$id'
 import { Route as RegisteredUsersIndexRouteImport } from './routes/registered-users.index'
@@ -28,6 +30,11 @@ import { Route as VisitorsIdRouteImport } from './routes/visitors.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GateLogsRoute = GateLogsRouteImport.update({
+  id: '/gate-logs',
+  path: '/gate-logs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -59,6 +66,11 @@ const VisitorsRoute = VisitorsRouteImport.update({
   id: '/visitors',
   path: '/visitors',
   getParentRoute: () => rootRouteImport,
+} as any)
+const GateLogsIndexRoute = GateLogsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GateLogsRoute,
 } as any)
 const MembersIndexRoute = MembersIndexRouteImport.update({
   id: '/',
@@ -103,6 +115,7 @@ const VisitorsIdRoute = VisitorsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/gate-logs': typeof GateLogsRouteWithChildren
   '/login': typeof LoginRoute
   '/members': typeof MembersRouteWithChildren
   '/registered-users': typeof RegisteredUsersRouteWithChildren
@@ -113,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
   '/visitors/$id': typeof VisitorsIdRoute
+  '/gate-logs/': typeof GateLogsIndexRoute
   '/members/': typeof MembersIndexRoute
   '/registered-users/': typeof RegisteredUsersIndexRoute
   '/users/': typeof UsersIndexRoute
@@ -126,6 +140,7 @@ export interface FileRoutesByTo {
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
   '/visitors/$id': typeof VisitorsIdRoute
+  '/gate-logs': typeof GateLogsIndexRoute
   '/members': typeof MembersIndexRoute
   '/registered-users': typeof RegisteredUsersIndexRoute
   '/users': typeof UsersIndexRoute
@@ -134,6 +149,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/gate-logs': typeof GateLogsRouteWithChildren
   '/login': typeof LoginRoute
   '/members': typeof MembersRouteWithChildren
   '/registered-users': typeof RegisteredUsersRouteWithChildren
@@ -144,6 +160,7 @@ export interface FileRoutesById {
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
   '/visitors/$id': typeof VisitorsIdRoute
+  '/gate-logs/': typeof GateLogsIndexRoute
   '/members/': typeof MembersIndexRoute
   '/registered-users/': typeof RegisteredUsersIndexRoute
   '/users/': typeof UsersIndexRoute
@@ -153,6 +170,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/gate-logs'
     | '/login'
     | '/members'
     | '/registered-users'
@@ -163,6 +181,7 @@ export interface FileRouteTypes {
     | '/registered-users/$id'
     | '/users/$id'
     | '/visitors/$id'
+    | '/gate-logs/'
     | '/members/'
     | '/registered-users/'
     | '/users/'
@@ -176,6 +195,7 @@ export interface FileRouteTypes {
     | '/registered-users/$id'
     | '/users/$id'
     | '/visitors/$id'
+    | '/gate-logs'
     | '/members'
     | '/registered-users'
     | '/users'
@@ -183,6 +203,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/gate-logs'
     | '/login'
     | '/members'
     | '/registered-users'
@@ -193,6 +214,7 @@ export interface FileRouteTypes {
     | '/registered-users/$id'
     | '/users/$id'
     | '/visitors/$id'
+    | '/gate-logs/'
     | '/members/'
     | '/registered-users/'
     | '/users/'
@@ -201,6 +223,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GateLogsRoute: typeof GateLogsRouteWithChildren
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRouteWithChildren
   RegisteredUsersRoute: typeof RegisteredUsersRouteWithChildren
@@ -216,6 +239,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gate-logs': {
+      id: '/gate-logs'
+      path: '/gate-logs'
+      fullPath: '/gate-logs'
+      preLoaderRoute: typeof GateLogsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -259,6 +289,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/visitors'
       preLoaderRoute: typeof VisitorsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/gate-logs/': {
+      id: '/gate-logs/'
+      path: '/'
+      fullPath: '/gate-logs/'
+      preLoaderRoute: typeof GateLogsIndexRouteImport
+      parentRoute: typeof GateLogsRoute
     }
     '/members/': {
       id: '/members/'
@@ -319,6 +356,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface GateLogsRouteChildren {
+  GateLogsIndexRoute: typeof GateLogsIndexRoute
+}
+
+const GateLogsRouteChildren: GateLogsRouteChildren = {
+  GateLogsIndexRoute: GateLogsIndexRoute,
+}
+
+const GateLogsRouteWithChildren = GateLogsRoute._addFileChildren(
+  GateLogsRouteChildren,
+)
+
 interface MembersRouteChildren {
   MembersIdRoute: typeof MembersIdRoute
   MembersIndexRoute: typeof MembersIndexRoute
@@ -374,6 +423,7 @@ const VisitorsRouteWithChildren = VisitorsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GateLogsRoute: GateLogsRouteWithChildren,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRouteWithChildren,
   RegisteredUsersRoute: RegisteredUsersRouteWithChildren,
