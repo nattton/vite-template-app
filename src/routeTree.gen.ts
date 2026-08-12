@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CamerasRouteImport } from './routes/cameras'
 import { Route as GateLogsRouteImport } from './routes/gate-logs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MembersRouteImport } from './routes/members'
@@ -17,6 +18,7 @@ import { Route as RegisteredUsersRouteImport } from './routes/registered-users'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as UsersRouteImport } from './routes/users'
 import { Route as VisitorsRouteImport } from './routes/visitors'
+import { Route as CamerasIndexRouteImport } from './routes/cameras.index'
 import { Route as GateLogsIndexRouteImport } from './routes/gate-logs.index'
 import { Route as MembersIndexRouteImport } from './routes/members.index'
 import { Route as MembersIdRouteImport } from './routes/members.$id'
@@ -30,6 +32,11 @@ import { Route as VisitorsIdRouteImport } from './routes/visitors.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CamerasRoute = CamerasRouteImport.update({
+  id: '/cameras',
+  path: '/cameras',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GateLogsRoute = GateLogsRouteImport.update({
@@ -66,6 +73,11 @@ const VisitorsRoute = VisitorsRouteImport.update({
   id: '/visitors',
   path: '/visitors',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CamerasIndexRoute = CamerasIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => CamerasRoute,
 } as any)
 const GateLogsIndexRoute = GateLogsIndexRouteImport.update({
   id: '/',
@@ -115,6 +127,7 @@ const VisitorsIdRoute = VisitorsIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cameras': typeof CamerasRouteWithChildren
   '/gate-logs': typeof GateLogsRouteWithChildren
   '/login': typeof LoginRoute
   '/members': typeof MembersRouteWithChildren
@@ -126,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
   '/visitors/$id': typeof VisitorsIdRoute
+  '/cameras/': typeof CamerasIndexRoute
   '/gate-logs/': typeof GateLogsIndexRoute
   '/members/': typeof MembersIndexRoute
   '/registered-users/': typeof RegisteredUsersIndexRoute
@@ -140,6 +154,7 @@ export interface FileRoutesByTo {
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
   '/visitors/$id': typeof VisitorsIdRoute
+  '/cameras': typeof CamerasIndexRoute
   '/gate-logs': typeof GateLogsIndexRoute
   '/members': typeof MembersIndexRoute
   '/registered-users': typeof RegisteredUsersIndexRoute
@@ -149,6 +164,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cameras': typeof CamerasRouteWithChildren
   '/gate-logs': typeof GateLogsRouteWithChildren
   '/login': typeof LoginRoute
   '/members': typeof MembersRouteWithChildren
@@ -160,6 +176,7 @@ export interface FileRoutesById {
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
   '/visitors/$id': typeof VisitorsIdRoute
+  '/cameras/': typeof CamerasIndexRoute
   '/gate-logs/': typeof GateLogsIndexRoute
   '/members/': typeof MembersIndexRoute
   '/registered-users/': typeof RegisteredUsersIndexRoute
@@ -170,6 +187,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/cameras'
     | '/gate-logs'
     | '/login'
     | '/members'
@@ -181,6 +199,7 @@ export interface FileRouteTypes {
     | '/registered-users/$id'
     | '/users/$id'
     | '/visitors/$id'
+    | '/cameras/'
     | '/gate-logs/'
     | '/members/'
     | '/registered-users/'
@@ -195,6 +214,7 @@ export interface FileRouteTypes {
     | '/registered-users/$id'
     | '/users/$id'
     | '/visitors/$id'
+    | '/cameras'
     | '/gate-logs'
     | '/members'
     | '/registered-users'
@@ -203,6 +223,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/cameras'
     | '/gate-logs'
     | '/login'
     | '/members'
@@ -214,6 +235,7 @@ export interface FileRouteTypes {
     | '/registered-users/$id'
     | '/users/$id'
     | '/visitors/$id'
+    | '/cameras/'
     | '/gate-logs/'
     | '/members/'
     | '/registered-users/'
@@ -223,6 +245,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CamerasRoute: typeof CamerasRouteWithChildren
   GateLogsRoute: typeof GateLogsRouteWithChildren
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRouteWithChildren
@@ -239,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cameras': {
+      id: '/cameras'
+      path: '/cameras'
+      fullPath: '/cameras'
+      preLoaderRoute: typeof CamerasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gate-logs': {
@@ -289,6 +319,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/visitors'
       preLoaderRoute: typeof VisitorsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/cameras/': {
+      id: '/cameras/'
+      path: '/'
+      fullPath: '/cameras/'
+      preLoaderRoute: typeof CamerasIndexRouteImport
+      parentRoute: typeof CamerasRoute
     }
     '/gate-logs/': {
       id: '/gate-logs/'
@@ -355,6 +392,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface CamerasRouteChildren {
+  CamerasIndexRoute: typeof CamerasIndexRoute
+}
+
+const CamerasRouteChildren: CamerasRouteChildren = {
+  CamerasIndexRoute: CamerasIndexRoute,
+}
+
+const CamerasRouteWithChildren =
+  CamerasRoute._addFileChildren(CamerasRouteChildren)
 
 interface GateLogsRouteChildren {
   GateLogsIndexRoute: typeof GateLogsIndexRoute
@@ -423,6 +471,7 @@ const VisitorsRouteWithChildren = VisitorsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CamerasRoute: CamerasRouteWithChildren,
   GateLogsRoute: GateLogsRouteWithChildren,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRouteWithChildren,
