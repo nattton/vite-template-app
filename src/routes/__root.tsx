@@ -119,8 +119,7 @@ function RootComponent() {
         <Outlet />
       </main>
       <footer className='border-t border-slate-800/80 py-6 text-center text-xs text-slate-500'>
-        Vite + React + TypeScript + TanStack Router + TanStack Query + Tailwind
-        CSS
+        Copyright © 2026 Code Mobi Co., Ltd. All rights reserved.
       </footer>
       <ReactQueryDevtools initialIsOpen={false} />
     </div>

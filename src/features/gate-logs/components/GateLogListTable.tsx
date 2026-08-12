@@ -16,6 +16,7 @@ import {
   Clock,
   Filter,
   Image as ImageIcon,
+  RotateCw,
   Search,
   ShieldCheck,
   User,
@@ -27,12 +28,16 @@ interface GateLogListTableProps {
   logs: GateLogItem[];
   filters: GateLogFilterParams;
   onFilterChange: (newFilters: GateLogFilterParams) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export const GateLogListTable: React.FC<GateLogListTableProps> = ({
   logs,
   filters,
   onFilterChange,
+  onRefresh,
+  isRefreshing = false,
 }) => {
   const [selectedImage, setSelectedImage] = useState<{
     url: string;
@@ -107,6 +112,20 @@ export const GateLogListTable: React.FC<GateLogListTableProps> = ({
             history and barrier triggers.
           </p>
         </div>
+
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className='inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-cyan-400 font-semibold text-sm transition-all border border-cyan-500/30 hover:border-cyan-500/60 shadow-lg shadow-cyan-500/10 shrink-0 self-start sm:self-center'
+            title='Refresh ANPR gate logs'
+          >
+            <RotateCw
+              className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+            <span>{isRefreshing ? "Refreshing..." : "Refresh Logs"}</span>
+          </button>
+        )}
       </div>
 
       {/* Date Filter & Search Toolbar */}

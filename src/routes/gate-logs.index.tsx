@@ -22,8 +22,10 @@ function GateLogsIndexComponent() {
   const {
     data: logs = [],
     isLoading,
+    isFetching,
     isError,
     error,
+    refetch,
   } = useQuery(gateLogsQueryOptions(filters));
 
   if (isLoading) {
@@ -47,6 +49,8 @@ function GateLogsIndexComponent() {
       logs={logs}
       filters={filters}
       onFilterChange={setFilters}
+      onRefresh={() => refetch()}
+      isRefreshing={isFetching}
     />
   );
 }
