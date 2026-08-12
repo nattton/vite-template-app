@@ -39,26 +39,34 @@ function RootComponent() {
               Dashboard
             </Link>
             {isAuthenticated && (
-              <Link
-                to='/members'
-                className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
-              >
-                Members
-              </Link>
+              <>
+                <Link
+                  to='/members'
+                  className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+                >
+                  Members
+                </Link>
+                <Link
+                  to='/registered-users'
+                  className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+                >
+                  Registered Users
+                </Link>
+              </>
             )}
             {isAuthenticated && user?.role === "admin" && (
               <>
-                <Link
-                  to='/users'
-                  className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
-                >
-                  Users List
-                </Link>
                 <Link
                   to='/reports'
                   className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
                 >
                   Traffic Reports
+                </Link>
+                <Link
+                  to='/users'
+                  className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+                >
+                  Users List
                 </Link>
               </>
             )}
