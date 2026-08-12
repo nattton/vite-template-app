@@ -9,10 +9,10 @@ export const api = axios.create({
   },
 });
 
-// Add request interceptor to attach JWT token ONLY to /report endpoints
+// Add request interceptor to attach JWT token when available
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
-  if (token && config.url?.includes("/report")) {
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

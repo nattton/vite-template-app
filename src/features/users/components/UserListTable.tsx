@@ -1,7 +1,24 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
-import { User } from '../schemas/userSchema'
-import { Search, User as UserIcon, Mail, Phone, MapPin, Building, ChevronRight } from 'lucide-react'
+import { User, CreateUserInput, UpdateUserInput } from '../schemas/usersSchema'
+import {
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+} from '../api/usersApi'
+import {
+  Search,
+  User as UserIcon,
+  UserPlus,
+  Edit2,
+  Trash2,
+  Shield,
+  ChevronRight,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react'
 
 interface UserListTableProps {
   users: User[]
@@ -9,44 +26,159 @@ interface UserListTableProps {
 
 export function UserListTable({ users }: UserListTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  // Modal states
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [deletingUser, setDeletingUser] = useState<User | null>(null)
+
+  // Form states for Create
+  const [createForm, setCreateForm] = useState<CreateUserInput>({
+    username: '',
+    password: '',
+    role: 'guard',
+  })
+
+  // Form states for Edit
+  const [editForm, setEditForm] = useState<UpdateUserInput>({
+    username: '',
+    password: '',
+    role: 'guard',
+  })
+
+  const createUserMutation = useCreateUserMutation()
+  const updateUserMutation = useUpdateUserMutation()
+  const deleteUserMutation = useDeleteUserMutation()
+
+  const showToast = (type: 'success' | 'error', text: string) => {
+    setToastMessage({ type, text })
+    setTimeout(() => setToastMessage(null), 4000)
+  }
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    createUserMutation.mutate(createForm, {
+      onSuccess: (data) => {
+        showToast('success', data.message || 'create user success')
+        setIsCreateOpen(false)
+        setCreateForm({ username: '', password: '', role: 'guard' })
+      },
+      onError: (err: any) => {
+        showToast('error', err?.response?.data?.message || err?.message || 'Failed to create user')
+      },
+    })
+  }
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingUser) return
+    updateUserMutation.mutate(
+      { id: editingUser.id, data: editForm },
+      {
+        onSuccess: (data) => {
+          showToast('success', data.message || 'update user success')
+          setEditingUser(null)
+        },
+        onError: (err: any) => {
+          showToast('error', err?.response?.data?.message || err?.message || 'Failed to update user')
+        },
+      }
+    )
+  }
+
+  const handleDeleteConfirm = () => {
+    if (!deletingUser) return
+    deleteUserMutation.mutate(deletingUser.id, {
+      onSuccess: (data) => {
+        showToast('success', data.message || 'delete user success')
+        setDeletingUser(null)
+      },
+      onError: (err: any) => {
+        showToast('error', err?.response?.data?.message || err?.message || 'Failed to delete user')
+      },
+    })
+  }
+
+  const openEditModal = (user: User) => {
+    setEditingUser(user)
+    setEditForm({
+      username: user.name,
+      password: '',
+      role: user.role,
+    })
+  }
 
   const filteredUsers = users.filter((user) => {
     const query = searchTerm.toLowerCase()
     return (
       user.name.toLowerCase().includes(query) ||
-      user.username.toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query) ||
-      user.company.name.toLowerCase().includes(query)
+      user.role.toLowerCase().includes(query) ||
+      String(user.id).includes(query)
     )
   })
 
   return (
     <div className="space-y-6">
-      {/* Header & Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-xl border shadow-lg transition-all animate-in fade-in duration-200 ${
+            toastMessage.type === 'success'
+              ? 'bg-emerald-950/90 border-emerald-800 text-emerald-200'
+              : 'bg-red-950/90 border-red-800 text-red-200'
+          }`}
+        >
+          {toastMessage.type === 'success' ? (
+            <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+          )}
+          <span className="text-sm font-medium">{toastMessage.text}</span>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2 text-slate-400 hover:text-slate-200"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Header & Controls Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800 backdrop-blur-md">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 flex items-center gap-2">
-            <UserIcon className="w-6 h-6 text-indigo-400" /> Users Directory
+            <UserIcon className="w-6 h-6 text-indigo-400" /> Admin Users Management
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Browse and manage enterprise user profiles with type-safe loader data.
+            Manage system administrators and guard accounts with REST endpoints.
           </p>
         </div>
 
-        {/* Search Input */}
-        <div className="relative min-w-[260px]">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search by name, email, or company..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
-          />
+        <div className="flex items-center gap-3">
+          {/* Search Input */}
+          <div className="relative min-w-[220px]">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+            />
+          </div>
+
+          {/* Add User Button */}
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm flex items-center gap-2 transition-all shadow-lg shadow-indigo-600/20 shrink-0"
+          >
+            <UserPlus className="w-4 h-4" /> Create User
+          </button>
         </div>
       </div>
 
-      {/* Users Grid / List */}
+      {/* Users Grid */}
       {filteredUsers.length === 0 ? (
         <div className="p-12 text-center bg-slate-900/40 border border-slate-800/80 rounded-2xl text-slate-400">
           No users found matching "{searchTerm}".
@@ -59,57 +191,261 @@ export function UserListTable({ users }: UserListTableProps) {
               className="group bg-slate-900 border border-slate-800/80 hover:border-indigo-500/40 rounded-2xl p-6 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-500/5 flex flex-col justify-between"
             >
               <div className="space-y-4">
-                {/* User Header */}
+                {/* User Card Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-base">
+                    <div className="h-11 w-11 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-base uppercase">
                       {user.name.charAt(0)}
                     </div>
                     <div>
                       <h3 className="font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors">
                         {user.name}
                       </h3>
-                      <p className="text-xs text-slate-400">@{user.username}</p>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase px-2 py-0.5 mt-0.5 rounded bg-slate-800 text-cyan-400 border border-slate-700">
+                        <Shield className="w-3 h-3" /> {user.role}
+                      </span>
                     </div>
                   </div>
-                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">
-                    ID: #{user.id}
+                  <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60">
+                    #{user.id}
                   </span>
-                </div>
-
-                {/* Info List */}
-                <div className="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800/60">
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Mail className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-                    <span className="truncate">{user.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Phone className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                    <span>{user.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span className="truncate">{user.address.city}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Building className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                    <span className="truncate">{user.company.name}</span>
-                  </div>
                 </div>
               </div>
 
-              {/* Action Button */}
-              <div className="pt-5 mt-4 border-t border-slate-800/60 flex justify-end">
+              {/* Action Buttons */}
+              <div className="pt-5 mt-4 border-t border-slate-800/60 flex items-center justify-between">
                 <Link
-                  to="/user/$id"
+                  to="/users/$id"
                   params={{ id: String(user.id) }}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-indigo-300 transition-colors"
                 >
-                  View Profile <ChevronRight className="w-3.5 h-3.5" />
+                  Details <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => openEditModal(user)}
+                    className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-indigo-400 transition-colors border border-slate-700/60"
+                    title="Edit user"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setDeletingUser(user)}
+                    className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 transition-colors"
+                    title="Delete user"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Create User Modal */}
+      {isCreateOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-indigo-400" /> Create New User
+              </h2>
+              <button
+                onClick={() => setIsCreateOpen(false)}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. guard"
+                  value={createForm.username}
+                  onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Role
+                </label>
+                <select
+                  value={createForm.role}
+                  onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="guard">guard</option>
+                  <option value="admin">admin</option>
+                  <option value="user">user</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createUserMutation.isPending}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {createUserMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit User Modal */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                <Edit2 className="w-5 h-5 text-indigo-400" /> Edit User #{editingUser.id}
+              </h2>
+              <button
+                onClick={() => setEditingUser(null)}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  placeholder="New username"
+                  value={editForm.username || ''}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  New Password (optional)
+                </label>
+                <input
+                  type="password"
+                  placeholder="Leave blank to keep unchanged"
+                  value={editForm.password || ''}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Role
+                </label>
+                <select
+                  value={editForm.role || ''}
+                  onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
+                >
+                  <option value="guard">guard</option>
+                  <option value="admin">admin</option>
+                  <option value="user">user</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateUserMutation.isPending}
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {updateUserMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingUser && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 space-y-6 shadow-2xl animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h2 className="text-lg font-bold text-red-400 flex items-center gap-2">
+                <Trash2 className="w-5 h-5" /> Confirm Delete
+              </h2>
+              <button
+                onClick={() => setDeletingUser(null)}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-300">
+              Are you sure you want to delete user{' '}
+              <span className="font-semibold text-white">"{deletingUser.name}"</span> (ID: #{deletingUser.id})? This action cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setDeletingUser(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                disabled={deleteUserMutation.isPending}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-sm font-semibold transition-all flex items-center gap-2 disabled:opacity-50"
+              >
+                {deleteUserMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                Delete User
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,17 +1,26 @@
-import { trafficReportQueryOptions } from "@/features/reports/api/reportsApi";
-import { ReportFilters } from "@/features/reports/components/ReportFilters";
-import { ReportStatCards } from "@/features/reports/components/ReportStatCards";
-import { ReportTable } from "@/features/reports/components/ReportTable";
 import {
+  trafficReportQueryOptions,
+  ReportFilters,
+  ReportStatCards,
+  ReportTable,
   getTodayDateString,
   ReportFilterParams,
-} from "@/features/reports/types/reports";
+} from "@/features/reports";
+import { useAuthStore } from "@/features/auth/store/useAuthStore";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/reports")({
+  beforeLoad: () => {
+    const { isAuthenticated } = useAuthStore.getState();
+    if (!isAuthenticated) {
+      throw redirect({
+        to: "/login",
+      });
+    }
+  },
   component: ReportsRouteComponent,
 });
 
@@ -31,8 +40,10 @@ function ReportsRouteComponent() {
     isFetching,
   } = useQuery(trafficReportQueryOptions(filters));
 
-  const reportTitle =
-    filters.type === "member_traffic" ? "Member Traffic" : "Visitor Traffic";
+  const reportTitle = filters.type
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 
   return (
     <div className='space-y-8'>
@@ -46,7 +57,8 @@ function ReportsRouteComponent() {
             Vehicle Traffic Reports
           </h1>
           <p className='text-slate-400 text-sm mt-1'>
-            Analyze member and visitor entry/exit frequency over customized time ranges.
+            Analyze member and visitor entry/exit frequency over customized time
+            ranges.
           </p>
         </div>
       </div>

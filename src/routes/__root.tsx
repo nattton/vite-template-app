@@ -19,7 +19,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootComponent() {
   const { user, isAuthenticated, logout } = useAuthStore();
 
-
   return (
     <div className='min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans'>
       <header className='border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50'>
@@ -39,19 +38,22 @@ function RootComponent() {
             >
               Dashboard
             </Link>
-            <Link
-              to='/users'
-              className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
-            >
-              Users List
-            </Link>
-            <Link
-              to='/reports'
-              className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
-            >
-              Traffic Reports
-            </Link>
-
+            {isAuthenticated && user?.role === "admin" && (
+              <>
+                <Link
+                  to='/users'
+                  className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+                >
+                  Users List
+                </Link>
+                <Link
+                  to='/reports'
+                  className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+                >
+                  Traffic Reports
+                </Link>
+              </>
+            )}
 
             {isAuthenticated && user ? (
               <div className='flex items-center gap-4 pl-4 border-l border-slate-800'>
