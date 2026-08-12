@@ -4,11 +4,31 @@ export const vehicleSchema = z.object({
   id: z.number(),
   memberId: z.number(),
   plateNumber: z.string(),
-  plateProvince: z.string().optional().default(""),
-  brand: z.string().optional().default(""),
-  color: z.string().optional().default(""),
-  telephone: z.string().optional().default(""),
-  resemble: z.string().optional().default(""),
+  plateProvince: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
+  brand: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
+  color: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
+  telephone: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
+  resemble: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
 });
 
 export type Vehicle = z.infer<typeof vehicleSchema>;
@@ -16,11 +36,31 @@ export type Vehicle = z.infer<typeof vehicleSchema>;
 export const memberSchema = z.object({
   id: z.number(),
   name: z.string(),
-  address: z.string().optional().default(""),
-  telephone: z.string().optional().default(""),
-  type: z.string().optional().default("resident"),
-  status: z.string().optional().default("active"),
-  vehicles: z.array(vehicleSchema).optional().default([]),
+  address: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
+  telephone: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? ""),
+  type: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? "resident"),
+  status: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => val ?? "active"),
+  vehicles: z
+    .array(vehicleSchema)
+    .optional()
+    .nullable()
+    .transform((val) => val ?? []),
 });
 
 export type Member = z.infer<typeof memberSchema>;

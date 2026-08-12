@@ -15,12 +15,15 @@ import { Route as MembersRouteImport } from './routes/members'
 import { Route as RegisteredUsersRouteImport } from './routes/registered-users'
 import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as UsersRouteImport } from './routes/users'
+import { Route as VisitorsRouteImport } from './routes/visitors'
 import { Route as MembersIndexRouteImport } from './routes/members.index'
 import { Route as MembersIdRouteImport } from './routes/members.$id'
 import { Route as RegisteredUsersIndexRouteImport } from './routes/registered-users.index'
 import { Route as RegisteredUsersIdRouteImport } from './routes/registered-users.$id'
 import { Route as UsersIndexRouteImport } from './routes/users.index'
 import { Route as UsersIdRouteImport } from './routes/users.$id'
+import { Route as VisitorsIndexRouteImport } from './routes/visitors.index'
+import { Route as VisitorsIdRouteImport } from './routes/visitors.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -50,6 +53,11 @@ const ReportsRoute = ReportsRouteImport.update({
 const UsersRoute = UsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VisitorsRoute = VisitorsRouteImport.update({
+  id: '/visitors',
+  path: '/visitors',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MembersIndexRoute = MembersIndexRouteImport.update({
@@ -82,6 +90,16 @@ const UsersIdRoute = UsersIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => UsersRoute,
 } as any)
+const VisitorsIndexRoute = VisitorsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => VisitorsRoute,
+} as any)
+const VisitorsIdRoute = VisitorsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => VisitorsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,12 +108,15 @@ export interface FileRoutesByFullPath {
   '/registered-users': typeof RegisteredUsersRouteWithChildren
   '/reports': typeof ReportsRoute
   '/users': typeof UsersRouteWithChildren
+  '/visitors': typeof VisitorsRouteWithChildren
   '/members/$id': typeof MembersIdRoute
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
+  '/visitors/$id': typeof VisitorsIdRoute
   '/members/': typeof MembersIndexRoute
   '/registered-users/': typeof RegisteredUsersIndexRoute
   '/users/': typeof UsersIndexRoute
+  '/visitors/': typeof VisitorsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -104,9 +125,11 @@ export interface FileRoutesByTo {
   '/members/$id': typeof MembersIdRoute
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
+  '/visitors/$id': typeof VisitorsIdRoute
   '/members': typeof MembersIndexRoute
   '/registered-users': typeof RegisteredUsersIndexRoute
   '/users': typeof UsersIndexRoute
+  '/visitors': typeof VisitorsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,12 +139,15 @@ export interface FileRoutesById {
   '/registered-users': typeof RegisteredUsersRouteWithChildren
   '/reports': typeof ReportsRoute
   '/users': typeof UsersRouteWithChildren
+  '/visitors': typeof VisitorsRouteWithChildren
   '/members/$id': typeof MembersIdRoute
   '/registered-users/$id': typeof RegisteredUsersIdRoute
   '/users/$id': typeof UsersIdRoute
+  '/visitors/$id': typeof VisitorsIdRoute
   '/members/': typeof MembersIndexRoute
   '/registered-users/': typeof RegisteredUsersIndexRoute
   '/users/': typeof UsersIndexRoute
+  '/visitors/': typeof VisitorsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,12 +158,15 @@ export interface FileRouteTypes {
     | '/registered-users'
     | '/reports'
     | '/users'
+    | '/visitors'
     | '/members/$id'
     | '/registered-users/$id'
     | '/users/$id'
+    | '/visitors/$id'
     | '/members/'
     | '/registered-users/'
     | '/users/'
+    | '/visitors/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -146,9 +175,11 @@ export interface FileRouteTypes {
     | '/members/$id'
     | '/registered-users/$id'
     | '/users/$id'
+    | '/visitors/$id'
     | '/members'
     | '/registered-users'
     | '/users'
+    | '/visitors'
   id:
     | '__root__'
     | '/'
@@ -157,12 +188,15 @@ export interface FileRouteTypes {
     | '/registered-users'
     | '/reports'
     | '/users'
+    | '/visitors'
     | '/members/$id'
     | '/registered-users/$id'
     | '/users/$id'
+    | '/visitors/$id'
     | '/members/'
     | '/registered-users/'
     | '/users/'
+    | '/visitors/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -172,6 +206,7 @@ export interface RootRouteChildren {
   RegisteredUsersRoute: typeof RegisteredUsersRouteWithChildren
   ReportsRoute: typeof ReportsRoute
   UsersRoute: typeof UsersRouteWithChildren
+  VisitorsRoute: typeof VisitorsRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -218,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/visitors': {
+      id: '/visitors'
+      path: '/visitors'
+      fullPath: '/visitors'
+      preLoaderRoute: typeof VisitorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/members/': {
       id: '/members/'
       path: '/'
@@ -259,6 +301,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/users/$id'
       preLoaderRoute: typeof UsersIdRouteImport
       parentRoute: typeof UsersRoute
+    }
+    '/visitors/': {
+      id: '/visitors/'
+      path: '/'
+      fullPath: '/visitors/'
+      preLoaderRoute: typeof VisitorsIndexRouteImport
+      parentRoute: typeof VisitorsRoute
+    }
+    '/visitors/$id': {
+      id: '/visitors/$id'
+      path: '/$id'
+      fullPath: '/visitors/$id'
+      preLoaderRoute: typeof VisitorsIdRouteImport
+      parentRoute: typeof VisitorsRoute
     }
   }
 }
@@ -302,6 +358,20 @@ const UsersRouteChildren: UsersRouteChildren = {
 
 const UsersRouteWithChildren = UsersRoute._addFileChildren(UsersRouteChildren)
 
+interface VisitorsRouteChildren {
+  VisitorsIdRoute: typeof VisitorsIdRoute
+  VisitorsIndexRoute: typeof VisitorsIndexRoute
+}
+
+const VisitorsRouteChildren: VisitorsRouteChildren = {
+  VisitorsIdRoute: VisitorsIdRoute,
+  VisitorsIndexRoute: VisitorsIndexRoute,
+}
+
+const VisitorsRouteWithChildren = VisitorsRoute._addFileChildren(
+  VisitorsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
@@ -309,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   RegisteredUsersRoute: RegisteredUsersRouteWithChildren,
   ReportsRoute: ReportsRoute,
   UsersRoute: UsersRouteWithChildren,
+  VisitorsRoute: VisitorsRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

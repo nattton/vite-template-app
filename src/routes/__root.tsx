@@ -47,6 +47,12 @@ function RootComponent() {
                   Members
                 </Link>
                 <Link
+                  to='/visitors'
+                  className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
+                >
+                  Visitors
+                </Link>
+                <Link
                   to='/registered-users'
                   className='text-slate-300 hover:text-white transition-colors [&.active]:text-indigo-400 [&.active]:font-semibold'
                 >
